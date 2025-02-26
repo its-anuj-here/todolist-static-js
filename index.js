@@ -1,5 +1,4 @@
 let taskListArr = [];
-let eventLogArr = [];
 let editingTaskId = null;
 
 function createTemplate(){
@@ -68,14 +67,6 @@ function createTemplate(){
         }else if(target.classList.contains('task-item-deleteBtn')){
             let delResponse = true//confirm("Are you sure about deleting the task?", false);
             if(delResponse){
-                let delEvent = {
-                    event: 'deleted',
-                    onTaskId : parentId,
-                    taskText : eleParent.children[1].innerText,
-                    complete : eleParent.children[0].checked
-                };
-                console.log(delEvent);
-                logEvent(delEvent);
                 deleteTask(parentId);
                 if(editingTaskId===parentId){
                     editingTaskId=null;
@@ -117,29 +108,8 @@ function createTemplate(){
         }
     });
 
-    let undoActionBtn = document.createElement('input');
-    undoActionBtn.type = 'button';
-    undoActionBtn.value= 'Undo';
-    undoActionBtn.id= 'undo-action-btn';
-    undoActionBtn.classList.add('task-input-area-action-btns');
-    undoActionBtn.disabled=true;
-
-    undoActionBtn.addEventListener('click', function(){
-        if(eventLogArr.length>0){
-            let lastEvent = fetchAndRemoveLastEvent();
-
-            if(lastEvent.event==='inserted'){
-                document.getElementById('task-'+lastEvent.onTaskId).remove();
-                deleteTask(lastEvent.onTaskId);
-            }
-        }
-        if(eventLogArr.length===0){
-            this.disabled=true;
-        }
-    });
 
     actionBtns.appendChild(taskInputAreaClear);
-    actionBtns.appendChild(undoActionBtn);
 
     taskInputArea.addEventListener("keypress", function(event) {
         if (event.key === "Enter") {
@@ -150,14 +120,8 @@ function createTemplate(){
             if(editingTaskId!=null){
                 const editingTaskParent =document.getElementById(`task-${editingTaskId}`);
                 const taskTextTag = document.getElementById(`task-${editingTaskId}-text`);
-                let updateEvent = {
-                    event: 'updated',
-                    onTaskId : editingTaskId,
-                    taskText : taskTextTag.innerText,
-                    complete : editingTaskParent.firstChild.checked
-                };
-                logEvent(updateEvent);
                 taskTextTag.innerText = taskText;
+                updateTaskText(editingTaskId, taskText);
                 editingTaskId = null;
             }else{
                 let currentId = 1;
@@ -172,13 +136,6 @@ function createTemplate(){
                     complete: false
                 }
                 createTask(task);
-                let insertEvent = {
-                    event: 'inserted',
-                    onTaskId : task.id,
-                    taskText : task.text,
-                    complete : false
-                };
-                logEvent(insertEvent);
             }
             this.value="";
         }
@@ -210,14 +167,13 @@ function printStoredTask(){
 }
 
 function createTask(task){
-    taskListArr.unshift({
+    taskListArr.push({
         id:task.id,
         text:task.text,
         complete:task.complete
     });
     updateLocalStorage(taskListArr);
     addTask(task);
-    console.log(taskListArr);
 }
 
 function updateTaskText(taskId, newText){
@@ -227,7 +183,6 @@ function updateTaskText(taskId, newText){
         }
     });
     updateLocalStorage(taskListArr);
-    console.log(taskListArr);
 }
 
 function updateTaskComplete(taskId, complete){
@@ -237,7 +192,6 @@ function updateTaskComplete(taskId, complete){
         }
     });
     updateLocalStorage(taskListArr);
-    console.log(taskListArr);
 }
 
 function deleteTask(taskId){
@@ -247,7 +201,6 @@ function deleteTask(taskId){
         }
     });
     updateLocalStorage(taskListArr);
-    console.log(taskListArr);
 }
 
 function addTask(task){
@@ -295,18 +248,5 @@ function addTask(task){
     taskListSpaceParent.insertBefore(taskDiv, taskListSpaceParent.firstElementChild);
 }
 
-function logEvent(taskEvent){
-    eventLogArr.push(taskEvent);
-    console.log(eventLogArr);
-}
-
-function fetchAndRemoveLastEvent(){
-    if(eventLogArr.length>0){
-        return eventLogArr.pop();
-    }
-    else
-        document.getElementById('undo-action-btn').disabled=true;
-        return -1;
-}
 
 createTemplate();
